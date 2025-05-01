@@ -1,128 +1,118 @@
-import React, { useState, useEffect, useTransition } from "react";
-import { TodoFormData, Todo } from "../types";
+import { useState, FormEvent } from "react";
+import { createTodo } from "../api/todoApi";
+import { Todo } from "../types";
+import { toast } from "react-toastify";
 
 interface TodoFormProps {
-  onSubmit: (data: TodoFormData) => Promise<Todo[] | void>;
-  initialData?: Todo;
-  onCancel?: () => void;
+  onTodoAdded: (todo: Todo) => void;
 }
 
-export function TodoForm({ onSubmit, initialData, onCancel }: TodoFormProps) {
-  const [formData, setFormData] = useState<TodoFormData>({
-    title: initialData?.title || "",
-    description: initialData?.description || "",
-  });
+export function TodoForm({ onTodoAdded }: TodoFormProps) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        title: initialData.title,
-        description: initialData.description || "",
-      });
-    }
-  }, [initialData]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
 
-    if (!formData.title.trim()) {
-      setError("Title is required");
+    if (!title.trim()) {
+      toast.error("Title is required");
       return;
     }
 
     try {
-      startTransition(async () => {
-        await onSubmit(formData);
-        if (!initialData) {
-          // Only reset the form if we're creating a new todo
-          setFormData({ title: "", description: "" });
-        }
+      setIsSubmitting(true);
+      const newTodo = await createTodo({
+        title,
+        description: description.trim() ? description : undefined,
       });
-    } catch (err) {
-      setError((err as Error).message || "An error occurred");
+
+      // Reset form
+      setTitle("");
+      setDescription("");
+
+      // Notify parent component
+      onTodoAdded(newTodo);
+    } catch (error) {
+      toast.error("Failed to create todo");
+      console.error("Error creating todo:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-4 mb-6 border rounded-lg bg-white"
-    >
-      {error && (
-        <div className="p-3 mb-4 text-sm text-red-800 bg-red-100 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      <div className="mb-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
         <label
           htmlFor="title"
-          className="block mb-2 text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
-          Title <span className="text-red-500">*</span>
+          Title *
         </label>
         <input
           type="text"
           id="title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter todo title"
-          disabled={isPending}
+          placeholder="What needs to be done?"
+          disabled={isSubmitting}
+          required
         />
       </div>
 
-      <div className="mb-4">
+      <div>
         <label
           htmlFor="description"
-          className="block mb-2 text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Description
         </label>
         <textarea
           id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter description (optional)"
-          disabled={isPending}
+          placeholder="Add some details (optional)"
+          rows={3}
+          disabled={isSubmitting}
         />
       </div>
 
-      <div className="flex justify-end space-x-2">
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-            disabled={isPending}
-          >
-            Cancel
-          </button>
-        )}
+      <div>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-          disabled={isPending}
+          disabled={isSubmitting}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-300 transition"
         >
-          {isPending ? "Saving..." : initialData ? "Update Todo" : "Add Todo"}
+          {isSubmitting ? (
+            <span className="flex items-center justify-center">
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Adding...
+            </span>
+          ) : (
+            "Add Todo"
+          )}
         </button>
       </div>
     </form>
