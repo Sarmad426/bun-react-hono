@@ -26,13 +26,13 @@ export async function fetchTodos(): Promise<Todo[]> {
 
 // Fetch a single todo by ID
 export async function fetchTodoById(id: string): Promise<Todo> {
-    const response = await fetch(`${API_URL}/todos/${id}`);
+    const response = await fetch(`${API_URL}/todos/todo/${id}`);
     return handleResponse<Todo>(response);
 }
 
 // Create a new todo
 export async function createTodo(todoData: CreateTodoPayload): Promise<Todo> {
-    const response = await fetch(`${API_URL}/todos`, {
+    const response = await fetch(`${API_URL}/todos/new`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -45,7 +45,8 @@ export async function createTodo(todoData: CreateTodoPayload): Promise<Todo> {
 
 // Update an existing todo
 export async function updateTodo(id: string, todoData: UpdateTodoPayload): Promise<Todo> {
-    const response = await fetch(`${API_URL}/todos/${id}`, {
+    console.log("Todo update data:", todoData);
+    const response = await fetch(`${API_URL}/todos/edit/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -58,7 +59,7 @@ export async function updateTodo(id: string, todoData: UpdateTodoPayload): Promi
 
 // Delete a todo
 export async function deleteTodo(id: string): Promise<Todo> {
-    const response = await fetch(`${API_URL}/todos/${id}`, {
+    const response = await fetch(`${API_URL}/todos/delete/${id}`, {
         method: 'DELETE',
     });
 
