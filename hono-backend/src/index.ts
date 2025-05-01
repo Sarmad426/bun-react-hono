@@ -52,7 +52,7 @@ export const createTodo = async (data: { title: string; description?: string }) 
 export const updateTodo = async (id: string, data: Partial<{ title: string; description: string; completed: boolean }>) => {
   const updatedData = {
     ...data,
-    updatedAt: new Date(),
+    updatedAt: new Date().toISOString(),
   };
 
   const result = await db
@@ -108,7 +108,7 @@ app.get("/todos", async (c) => {
 });
 
 // GET a single todo by ID
-app.get("/todos/:id", async (c) => {
+app.get("/todos/todo/:id", async (c) => {
   const id = c.req.param("id");
   try {
     const todo = await getTodoById(id);
@@ -132,7 +132,7 @@ app.get("/todos/:id", async (c) => {
 });
 
 // POST create a new todo
-app.post("/todos", zValidator("json", createTodoSchema), async (c) => {
+app.post("/todos/new", zValidator("json", createTodoSchema), async (c) => {
   const data = c.req.valid("json");
   try {
     const newTodo = await createTodo(data);
@@ -150,9 +150,10 @@ app.post("/todos", zValidator("json", createTodoSchema), async (c) => {
 });
 
 // PUT update a todo
-app.put("/todos/:id", zValidator("json", updateTodoSchema), async (c) => {
+app.put("/todos/edit/:id", zValidator("json", updateTodoSchema), async (c) => {
   const id = c.req.param("id");
   const data = c.req.valid("json");
+  console.log("Todo to be updated:", data)
   try {
     const existingTodo = await getTodoById(id);
     if (!existingTodo) {
@@ -177,7 +178,7 @@ app.put("/todos/:id", zValidator("json", updateTodoSchema), async (c) => {
 });
 
 // DELETE remove a todo
-app.delete("/todos/:id", async (c) => {
+app.delete("/todos/delete/:id", async (c) => {
   const id = c.req.param("id");
   try {
     const existingTodo = await getTodoById(id);
