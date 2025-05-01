@@ -3,11 +3,8 @@ import { use, useDeferredValue, useOptimistic } from "react";
 import { todoApi } from "../api/todoApi";
 import { Todo, TodoFormData } from "../types";
 
-interface UseTodosOptions {
-    userId: string;
-}
 
-export function useTodos({ userId }: UseTodosOptions) {
+export function useTodos() {
     // Use the new React 19 'use' hook for data fetching
     const todosPromise = useMemo(() => {
         return todoApi.getTodos();
@@ -44,7 +41,6 @@ export function useTodos({ userId }: UseTodosOptions) {
                 title: data.title,
                 description: data.description || "",
                 completed: false,
-                userId,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };
@@ -64,7 +60,7 @@ export function useTodos({ userId }: UseTodosOptions) {
                 throw error;
             }
         },
-        [userId, addOptimisticTodo]
+        [addOptimisticTodo]
     );
 
     // Update function with optimistic update
