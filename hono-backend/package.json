@@ -1,23 +1,25 @@
 {
-  "name": "hono-bun-start",
+  "name": "hono-backend",
   "type": "module",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:pull": "drizzle-kit pull"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.5.0",
-    "@neondatabase/serverless": "^1.0.0",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",
     "hono": "^4.7.8",
     "pg": "^8.15.6",
+    "postgres": "^3.4.5",
     "zod": "^3.24.3"
   },
   "devDependencies": {
     "@types/bun": "^1.2.10",
     "@types/pg": "^8.11.14",
     "drizzle-kit": "^0.31.0",
-    "tsx": "^4.19.3",
-    "vercel": "^41.6.2"
+    "tsx": "^4.19.3"
   }
 }
