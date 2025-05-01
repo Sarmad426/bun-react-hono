@@ -1,17 +1,14 @@
 import { Hono } from "hono";
-import { handle } from "hono/vercel";
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import { logger } from "hono/logger";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { todoTable } from "../drizzle/schema";
+import { todos } from "../drizzle/schema";
 import { cors } from 'hono/cors'
 
-// Initialize Neon client and Drizzle
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle({ client: sql });
+
+const db = drizzle(process.env.DATABASE_URL!);
 
 
 // Create Zod schemas for validation
@@ -30,21 +27,21 @@ const updateTodoSchema = z.object({
 export const getTodos = async () => {
   return await db
     .select()
-    .from(todoTable)
-    .orderBy(todoTable.createdAt);
+    .from(todos)
+    .orderBy(todos.createdAt);
 };
 
 export const getTodoById = async (id: string) => {
   const result = await db
     .select()
-    .from(todoTable)
-    .where(eq(todoTable.id, id));
+    .from(todos)
+    .where(eq(todos.id, id));
 
   return result[0] || null;
 };
 
 export const createTodo = async (data: { title: string; description?: string }) => {
-  const result = await db.insert(todoTable).values({
+  const result = await db.insert(todos).values({
     title: data.title,
     description: data.description || "",
   }).returning();
@@ -59,9 +56,9 @@ export const updateTodo = async (id: string, data: Partial<{ title: string; desc
   };
 
   const result = await db
-    .update(todoTable)
+    .update(todos)
     .set(updatedData)
-    .where(eq(todoTable.id, id))
+    .where(eq(todos.id, id))
     .returning();
 
   return result[0] || null;
@@ -69,8 +66,8 @@ export const updateTodo = async (id: string, data: Partial<{ title: string; desc
 
 export const deleteTodo = async (id: string) => {
   const result = await db
-    .delete(todoTable)
-    .where(eq(todoTable.id, id))
+    .delete(todos)
+    .where(eq(todos.id, id))
     .returning();
 
   return result[0] || null;
@@ -83,7 +80,7 @@ const app = new Hono()
 app.use(
   "*", // Apply CORS to all routes
   cors({
-    origin: "*", // Allow all origins
+    origin: "*", // Next js frontend URL
     allowMethods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
     allowHeaders: ["Content-Type"], // Allowed headers
   })
