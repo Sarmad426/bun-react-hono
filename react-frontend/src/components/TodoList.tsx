@@ -1,131 +1,109 @@
-import { useState, useMemo, useTransition } from "react";
-import { Todo, TodoFormData } from "../types";
+import { useState, useMemo } from "react";
 import { TodoItem } from "./TodoItem";
-import { TodoForm } from "./TodoForm";
-import { TodoFilter } from "./TodoFilter";
+import { Todo } from "../types";
+import { Tabs } from "./Tabs";
 
 interface TodoListProps {
   todos: Todo[];
-  onToggleComplete: (id: string, completed: boolean) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  onUpdate: (id: string, data: TodoFormData) => Promise<void>;
-  onCreate: (data: TodoFormData) => Promise<Todo[] | void>;
-  isLoading: boolean;
+  onTodoUpdated: (todo: Todo) => void;
+  onTodoDeleted: (id: string) => void;
 }
 
 export function TodoList({
   todos,
-  onToggleComplete,
-  onDelete,
-  onUpdate,
-  onCreate,
-  isLoading,
+  onTodoUpdated,
+  onTodoDeleted,
 }: TodoListProps) {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
-  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Calculate filtered todos
   const filteredTodos = useMemo(() => {
-    switch (filter) {
-      case "active":
-        return todos.filter((todo) => !todo.completed);
-      case "completed":
-        return todos.filter((todo) => todo.completed);
-      default:
-        return todos;
-    }
-  }, [todos, filter]);
+    let filtered = [...todos];
 
-  // Calculate counts for the filter component
+    // Apply status filter
+    if (filter === "active") {
+      filtered = filtered.filter((todo) => !todo.completed);
+    } else if (filter === "completed") {
+      filtered = filtered.filter((todo) => todo.completed);
+    }
+
+    // Apply search filter if there's a search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (todo) =>
+          todo.title.toLowerCase().includes(term) ||
+          (todo.description && todo.description.toLowerCase().includes(term))
+      );
+    }
+
+    return filtered;
+  }, [todos, filter, searchTerm]);
+
+  // Calculate counts for tabs
   const counts = useMemo(
     () => ({
-      total: todos.length,
+      all: todos.length,
       active: todos.filter((todo) => !todo.completed).length,
       completed: todos.filter((todo) => todo.completed).length,
     }),
     [todos]
   );
 
-  const handleEditSubmit = async (data: TodoFormData) => {
-    if (!editingTodo) return;
-
-    await onUpdate(editingTodo.id, data);
-    setEditingTodo(null);
-  };
-
-  const handleEdit = (todo: Todo) => {
-    setEditingTodo(todo);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTodo(null);
-  };
-
-  const handleToggleComplete = (id: string, completed: boolean) => {
-    startTransition(async () => {
-      await onToggleComplete(id, completed);
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    startTransition(async () => {
-      await onDelete(id);
-    });
+  const handleTabChange = (newTab: "all" | "active" | "completed") => {
+    setFilter(newTab);
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h1 className="mb-6 text-3xl font-bold text-center text-gray-900">
-        My Todo List
-      </h1>
+    <div>
+      <div className="mb-6">
+        <Tabs
+          currentTab={filter}
+          onTabChange={handleTabChange}
+          tabs={[
+            { id: "all", label: `All (${counts.all})` },
+            { id: "active", label: `Active (${counts.active})` },
+            { id: "completed", label: `Completed (${counts.completed})` },
+          ]}
+        />
+      </div>
 
-      <TodoForm onSubmit={onCreate} />
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search todos..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
-      <TodoFilter
-        activeFilter={filter}
-        onFilterChange={setFilter}
-        totalTodos={counts.total}
-        activeTodos={counts.active}
-        completedTodos={counts.completed}
-      />
-
-      {isLoading && (
-        <div className="flex justify-center py-4">
-          <div className="w-6 h-6 border-2 border-t-blue-600 rounded-full animate-spin"></div>
-        </div>
-      )}
-
-      {!isLoading && filteredTodos.length === 0 ? (
-        <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-lg">
-          {filter === "all" ? (
-            <p>You have no todos yet. Add one above!</p>
+      {filteredTodos.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          {searchTerm ? (
+            <p>No todos match your search.</p>
+          ) : filter === "all" ? (
+            <p>You have no todos yet. Create one above!</p>
           ) : filter === "active" ? (
-            <p>No active todos found.</p>
+            <p>You have no active todos.</p>
           ) : (
-            <p>No completed todos found.</p>
+            <p>You have no completed todos.</p>
           )}
         </div>
       ) : (
-        <div className={`space-y-2 ${isPending ? "opacity-70" : ""}`}>
-          {filteredTodos.map((todo) =>
-            editingTodo?.id === todo.id ? (
-              <TodoForm
-                key={todo.id}
-                initialData={todo}
-                onSubmit={handleEditSubmit}
-                onCancel={handleCancelEdit}
-              />
-            ) : (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggleComplete={handleToggleComplete}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            )
-          )}
+        <div>
+          {filteredTodos.map((todo) => (
+            <TodoItem
+              key={todo.id}
+              todo={todo}
+              onTodoUpdated={onTodoUpdated}
+              onTodoDeleted={onTodoDeleted}
+            />
+          ))}
+          <p className="text-sm text-gray-500 mt-4 text-right">
+            {filteredTodos.length}{" "}
+            {filteredTodos.length === 1 ? "item" : "items"}
+          </p>
         </div>
       )}
     </div>
