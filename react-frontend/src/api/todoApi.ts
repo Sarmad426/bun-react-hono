@@ -1,63 +1,66 @@
-import { Todo, TodoFormData, ApiResponse } from "../types";
+import { Todo, ApiResponse, CreateTodoPayload, UpdateTodoPayload } from '../types';
 
-const API_BASE_URL = "http://localhost:3000";
+const API_URL = 'http://localhost:3000';
 
-async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+// Helper function to handle API responses
+async function handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "An error occurred");
+        throw new Error(errorData.message || 'An unexpected error occurred');
     }
-    return await response.json();
+
+    const data: ApiResponse<T> = await response.json();
+
+    if (!data.success) {
+        throw new Error(data.message || 'Operation failed');
+    }
+
+    return data.data as T;
 }
 
-export const todoApi = {
-    async getTodos(): Promise<Todo[]> {
-        const url = `${API_BASE_URL}/todos`;
+// Fetch all todos
+export async function fetchTodos(): Promise<Todo[]> {
+    const response = await fetch(`${API_URL}/todos`);
+    return handleResponse<Todo[]>(response);
+}
 
-        const response = await fetch(url);
-        const result = await handleResponse<Todo[]>(response);
-        console.log("Fetched todos:", result.data);
-        return result.data || [];
-    },
+// Fetch a single todo by ID
+export async function fetchTodoById(id: string): Promise<Todo> {
+    const response = await fetch(`${API_URL}/todos/${id}`);
+    return handleResponse<Todo>(response);
+}
 
-    async getTodoById(id: string): Promise<Todo | null> {
-        const response = await fetch(`${API_BASE_URL}/todos/${id}`);
-        const result = await handleResponse<Todo>(response);
-        return result.data || null;
-    },
+// Create a new todo
+export async function createTodo(todoData: CreateTodoPayload): Promise<Todo> {
+    const response = await fetch(`${API_URL}/todos`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(todoData),
+    });
 
-    async createTodo(data: TodoFormData): Promise<Todo> {
-        const response = await fetch(`${API_BASE_URL}/todos`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ...data }),
-        });
-        const result = await handleResponse<Todo>(response);
-        return result.data!;
-    },
+    return handleResponse<Todo>(response);
+}
 
-    async updateTodo(
-        id: string,
-        data: Partial<TodoFormData & { completed: boolean }>
-    ): Promise<Todo> {
-        const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-        });
-        const result = await handleResponse<Todo>(response);
-        return result.data!;
-    },
+// Update an existing todo
+export async function updateTodo(id: string, todoData: UpdateTodoPayload): Promise<Todo> {
+    const response = await fetch(`${API_URL}/todos/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(todoData),
+    });
 
-    async deleteTodo(id: string): Promise<Todo> {
-        const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
-            method: "DELETE",
-        });
-        const result = await handleResponse<Todo>(response);
-        return result.data!;
-    },
-};
+    return handleResponse<Todo>(response);
+}
+
+// Delete a todo
+export async function deleteTodo(id: string): Promise<Todo> {
+    const response = await fetch(`${API_URL}/todos/${id}`, {
+        method: 'DELETE',
+    });
+
+    return handleResponse<Todo>(response);
+}
