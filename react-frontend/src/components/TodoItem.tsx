@@ -21,9 +21,11 @@ export function TodoItem({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleToggleComplete = async () => {
+    console.log("Clicked checkbox for todo:", todo);
     try {
       setIsLoading(true);
       const updatedTodo = await updateTodo(todo.id, {
+        ...todo,
         completed: !todo.completed,
       });
       onTodoUpdated(updatedTodo);
