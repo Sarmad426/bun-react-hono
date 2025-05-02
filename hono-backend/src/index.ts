@@ -1,86 +1,24 @@
 import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/postgres-js";
-import { eq } from "drizzle-orm";
 import { logger } from "hono/logger";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
-import { todos } from "../drizzle/schema";
 import { cors } from 'hono/cors'
+import { zValidator } from "@hono/zod-validator";
+import {
+  createTodo,
+  createTodoSchema,
+  deleteTodo, getTodoById,
+  getTodos,
+  updateTodo,
+  updateTodoSchema
+} from "./db";
 
 
-const db = drizzle(process.env.DATABASE_URL!);
-
-
-// Create Zod schemas for validation
-const createTodoSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-});
-
-const updateTodoSchema = z.object({
-  title: z.string().min(1, "Title is required").optional(),
-  description: z.string().optional(),
-  completed: z.boolean().optional(),
-});
-
-// Define database queries
-export const getTodos = async () => {
-  return await db
-    .select()
-    .from(todos)
-    .orderBy(todos.createdAt);
-};
-
-export const getTodoById = async (id: string) => {
-  const result = await db
-    .select()
-    .from(todos)
-    .where(eq(todos.id, id));
-
-  return result[0] || null;
-};
-
-export const createTodo = async (data: { title: string; description?: string }) => {
-  const result = await db.insert(todos).values({
-    title: data.title,
-    description: data.description || "",
-  }).returning();
-
-  return result[0];
-};
-
-export const updateTodo = async (id: string, data: Partial<{ title: string; description: string; completed: boolean }>) => {
-  const updatedData = {
-    ...data,
-    updatedAt: new Date().toISOString(),
-  };
-
-  const result = await db
-    .update(todos)
-    .set(updatedData)
-    .where(eq(todos.id, id))
-    .returning();
-
-  return result[0] || null;
-};
-
-export const deleteTodo = async (id: string) => {
-  const result = await db
-    .delete(todos)
-    .where(eq(todos.id, id))
-    .returning();
-
-  return result[0] || null;
-};
-
-// Initialize Hono app
 const app = new Hono()
 
 // Enable CORS
 app.use(
   "*", // Apply CORS to all routes
   cors({
-    origin: "*", // Next js frontend URL
+    origin: "*",
     allowMethods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
     allowHeaders: ["Content-Type"], // Allowed headers
   })
@@ -91,6 +29,8 @@ app.use(logger());
 // Routes
 app.get("/", (c) => c.json({ message: "Todo API is running!" }));
 
+
+// GET ALL TODOS
 app.get("/todos", async (c) => {
   try {
     const todos = await getTodos();
