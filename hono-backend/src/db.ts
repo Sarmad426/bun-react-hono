@@ -21,11 +21,11 @@ export const updateTodoSchema = z.object({
 });
 
 // Define database queries
-export const getTodos = async () => {
+export const getTodos = async (limit: number = 50) => {
     return await db
         .select()
         .from(todos)
-        .orderBy(todos.createdAt);
+        .orderBy(todos.createdAt).limit(limit);
 };
 
 export const getTodoById = async (id: string) => {
