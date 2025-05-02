@@ -3,8 +3,9 @@ import { eq } from "drizzle-orm";
 import { todos } from "../drizzle/schema";
 import { z } from 'zod'
 
+import { env } from 'bun'
 
-const db = drizzle(process.env.DATABASE_URL!);
+const db = drizzle(env.DATABASE_URL!);
 
 
 // Create Zod schemas for validation
