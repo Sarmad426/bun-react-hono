@@ -21,6 +21,9 @@ USER bun
 # Install dependencies
 RUN bun install
 
+RUN bun drizzle-kit generate
+RUN bun drizzle-kit push
+
 # Expose port (adjust according to your Hono server config)
 EXPOSE 3000
 
