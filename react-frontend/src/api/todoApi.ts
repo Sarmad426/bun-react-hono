@@ -45,7 +45,6 @@ export async function createTodo(todoData: CreateTodoPayload): Promise<Todo> {
 
 // Update an existing todo
 export async function updateTodo(id: string, todoData: UpdateTodoPayload): Promise<Todo> {
-    console.log("Todo update data:", todoData);
     const response = await fetch(`${API_URL}/todos/edit/${id}`, {
         method: 'PUT',
         headers: {

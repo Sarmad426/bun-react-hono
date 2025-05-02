@@ -36,7 +36,6 @@ function App() {
   };
 
   const handleTodoUpdated = (updatedTodo: Todo) => {
-    console.log("Updated todo:", updatedTodo);
     setTodos((prevTodos) =>
       prevTodos.map((todo) => (todo.id === updatedTodo.id ? updatedTodo : todo))
     );
