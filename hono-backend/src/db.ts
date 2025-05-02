@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import { todos } from "../drizzle/schema";
 
-const db = drizzle(env.DATABASE_URL!);
+export const db = drizzle(env.DATABASE_URL!);
 
 export const getTodos = async (limit: number = 50) => {
     return await db
