@@ -4,13 +4,12 @@ import { cors } from 'hono/cors'
 import { zValidator } from "@hono/zod-validator";
 import {
   createTodo,
-  createTodoSchema,
-  deleteTodo, getTodoById,
+  deleteTodo,
+  getTodoById,
   getTodos,
   updateTodo,
-  updateTodoSchema
 } from "./db";
-
+import { createTodoSchema, updateTodoSchema } from './zod-schema'
 
 const app = new Hono()
 
@@ -55,7 +54,8 @@ app.get("/todos/todo/:id", async (c) => {
     if (!todo) {
       return c.json({
         success: false,
-        message: "Todo not found"
+        message:
+          "404: Todo not found"
       }, 404);
     }
     return c.json({
