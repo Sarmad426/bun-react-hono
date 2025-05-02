@@ -1,26 +1,28 @@
-# Use official Bun image (includes Bun, Node.js, and npm)
-FROM oven/bun:1.1.8-alpine
+# Use Bun official image
+FROM oven/bun:1.1.8 as base
 
-# Create non-root user for security
-RUN addgroup -S app && adduser -S -G app app
-
-# Set working directory
+# Create app directory
 WORKDIR /app
 
-# Set non-root user
-USER app
+# Copy package files
+COPY bun.lock package.json ./
 
-# Copy Bun-related files first to leverage caching
-COPY --chown=app:app bun.lockb package.json tsconfig.json ./
+# Copy rest of the backend code
+COPY . .
+
+# Ensure current directory is owned by bun user (non-root)
+# 'bun' user has UID=1000 inside the Bun image
+USER root
+RUN chown -R bun:bun /app
+
+# Switch to non-root 'bun' user provided by the oven/bun image
+USER bun
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
-# Copy remaining files (e.g., src/, public/, etc.)
-COPY --chown=app:app . .
-
-# Expose the port your Hono app listens on (default example: 3000)
+# Expose port (adjust according to your Hono server config)
 EXPOSE 3000
 
-# Start the Hono app
-CMD ["bun", "start"]
+# Start the app
+CMD ["bun", "run", "dev"]
