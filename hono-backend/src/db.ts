@@ -1,14 +1,10 @@
+import { env } from 'bun'
 import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import { todos } from "../drizzle/schema";
 
-import { env } from 'bun'
-
 const db = drizzle(env.DATABASE_URL!);
 
-
-
-// Define database queries
 export const getTodos = async (limit: number = 50) => {
     return await db
         .select()
