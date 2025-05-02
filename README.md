@@ -99,3 +99,11 @@ bun dev
 ```
 
 Open this url on your browser: <http://localhost:5173>
+
+## Run with Docker Compose
+
+Ensure you have docker and docker-compose installed.
+
+```bash
+docker compose up --build
+```
