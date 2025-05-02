@@ -1,24 +1,12 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import { todos } from "../drizzle/schema";
-import { z } from 'zod'
 
 import { env } from 'bun'
 
 const db = drizzle(env.DATABASE_URL!);
 
 
-// Create Zod schemas for validation
-export const createTodoSchema = z.object({
-    title: z.string().min(1, "Title is required"),
-    description: z.string().optional(),
-});
-
-export const updateTodoSchema = z.object({
-    title: z.string().min(1, "Title is required").optional(),
-    description: z.string().optional(),
-    completed: z.boolean().optional(),
-});
 
 // Define database queries
 export const getTodos = async (limit: number = 50) => {
