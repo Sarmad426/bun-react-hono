@@ -18,7 +18,7 @@ const app = new Hono()
 app.use(
   "*", // Apply CORS to all routes
   cors({
-    origin: "*",
+    origin: ["http://localhost:5173"], // React vite
     allowMethods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
     allowHeaders: ["Content-Type"], // Allowed headers
   })
@@ -93,7 +93,6 @@ app.post("/todos/new", zValidator("json", createTodoSchema), async (c) => {
 app.put("/todos/edit/:id", zValidator("json", updateTodoSchema), async (c) => {
   const id = c.req.param("id");
   const data = c.req.valid("json");
-  console.log("Todo to be updated:", data)
   try {
     const existingTodo = await getTodoById(id);
     if (!existingTodo) {
